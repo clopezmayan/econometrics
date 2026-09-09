@@ -8,16 +8,16 @@
 #  the Frisch-Waugh-Lovell theorem behind it.
 #
 #  This app makes both visible ON REAL DATA:
-#    A   math on studteachr alone            -> the simple slope
-#    B   studteachr on the control           -> the residuals x1-tilde
+#    A   math on stratio alone            -> the simple slope
+#    B   stratio on the control           -> the residuals x1-tilde
 #    C   math on x1-tilde                    -> EXACTLY the multiple
 #                                               regression coefficient
 #  with the Ballentine beside it, its overlap driven by the
-#  correlation between studteachr and the control the student picks.
+#  correlation between stratio and the control the student picks.
 #
 #  THE POINT OF THE MENU (the thing worth discovering): the size of
 #  the overlap is NOT what moves the coefficient. `expenditure`
-#  overlaps most with studteachr (r = -0.62) and barely moves it;
+#  overlaps most with stratio (r = -0.62) and barely moves it;
 #  `income` overlaps least (r = -0.23) and moves it most. What
 #  matters is the overlap TIMES how strongly the control explains
 #  math -- which is the annex's equation 5.2, and Unit 7's omitted
@@ -55,7 +55,7 @@ CONTROLS <- c("District income"          = "income",
               "% English learners"       = "english",
               "Spending per pupil"       = "expenditure")
 
-SIMPLE <- unname(coef(lm(math ~ studteachr, ca))[2])   # -1.939, never changes
+SIMPLE <- unname(coef(lm(math ~ stratio, ca))[2])   # -1.939, never changes
 
 ## ====================  USER INTERFACE  ======================
 ui <- fluidPage(
@@ -70,7 +70,7 @@ ui <- fluidPage(
   titlePanel("Partialling out: what a control variable does"),
   p(class = "note",
     "Econometrics I · Unit 3 · sections 3.2 and 3.3. ",
-    "420 California school districts. We want the effect of ", strong("studteachr"),
+    "420 California school districts. We want the effect of ", strong("stratio"),
     " (students per teacher) on ", strong("math"), ". Pick one control variable ",
     "and watch what happens."),
 
@@ -87,12 +87,12 @@ ui <- fluidPage(
           div(class = "big", textOutput("bm", inline = TRUE))),
       p(class = "note",
         strong("What to look at."), " Panel C regresses math on what is ",
-        em("left"), " of studteachr once the control is taken out of it. ",
+        em("left"), " of stratio once the control is taken out of it. ",
         "Its slope is the multiple regression coefficient — not close to it, ",
         em("equal"), " to it. That is the Frisch–Waugh–Lovell theorem."),
       p(class = "note",
         strong("Then try all four controls."), " The one that overlaps most with ",
-        "studteachr is not the one that moves the coefficient most. Ask yourself why.")
+        "stratio is not the one that moves the coefficient most. Ask yourself why.")
     ),
 
     mainPanel(
@@ -115,10 +115,10 @@ server <- function(input, output, session) {
 
   bits <- reactive({
     c2 <- input$c2
-    x1 <- ca$studteachr; y <- ca$math; x2 <- ca[[c2]]
+    x1 <- ca$stratio; y <- ca$math; x2 <- ca[[c2]]
     mult <- lm(y ~ x1 + x2)
-    aux  <- lm(x1 ~ x2)          # studteachr on the control
-    xt   <- resid(aux)           # x1-tilde: studteachr with the control removed
+    aux  <- lm(x1 ~ x2)          # stratio on the control
+    xt   <- resid(aux)           # x1-tilde: stratio with the control removed
     fwl  <- lm(y ~ xt)
     list(c2 = c2, x1 = x1, y = y, x2 = x2, xt = xt,
          b1 = unname(coef(mult)[2]),
@@ -139,7 +139,7 @@ server <- function(input, output, session) {
       "<div class='lab'>Panel C slope vs the multiple regression coefficient</div>
        <div style='font-size:16px;padding:4px 0 10px 0;'>
          slope on x&#771;<sub>1</sub> = <b>%.6f</b> &nbsp;&nbsp;
-         &beta;&#770;<sub>1</sub> from math ~ studteachr + %s = <b>%.6f</b>
+         &beta;&#770;<sub>1</sub> from math ~ stratio + %s = <b>%.6f</b>
          &nbsp; <span style='color:%s'>identical</span>
        </div>
        <div class='lab'>Where the difference between the two slopes comes from
@@ -150,8 +150,8 @@ server <- function(input, output, session) {
          %.3f + (%.3f)(%.4f) = <b>%.3f</b>
        </div>
        <div class='lab' style='padding-top:6px;'>
-         correlation between studteachr and %s = %.3f &nbsp;·&nbsp;
-         it explains %.1f%% of the variation in studteachr</div>",
+         correlation between stratio and %s = %.3f &nbsp;·&nbsp;
+         it explains %.1f%% of the variation in stratio</div>",
       b$fwl, b$c2, b$b1, navy,
       b$b1, b$b2, b$d1, b$b1 + b$b2 * b$d1,
       b$c2, b$r, 100 * b$r2))
@@ -169,16 +169,16 @@ server <- function(input, output, session) {
       mtext(slope_lab, side = 3, line = -1.4, adj = 0.96, col = navy, font = 2, cex = 0.95)
     }
 
-    sc(b$x1, b$y, "studteachr", "math",
-       "A. math on studteachr", sprintf("slope %+.3f", SIMPLE))
+    sc(b$x1, b$y, "stratio", "math",
+       "A. math on stratio", sprintf("slope %+.3f", SIMPLE))
     plot(b$x2, b$x1, pch = 16, col = adjustcolor(steel, 0.45), cex = 0.7, las = 1,
-         xlab = b$c2, ylab = "studteachr",
-         main = sprintf("B. studteachr on %s", b$c2),
+         xlab = b$c2, ylab = "stratio",
+         main = sprintf("B. stratio on %s", b$c2),
          col.main = navy, col.lab = muted, cex.main = 1.25, cex.lab = 1.05)
     abline(lm(b$x1 ~ b$x2), col = muted, lwd = 3)
     mtext("residuals = x̃₁", side = 3, line = -1.4, adj = 0.96,
           col = navy, font = 2, cex = 0.95)
-    sc(b$xt, b$y, "x̃₁  (studteachr, control removed)", "math",
+    sc(b$xt, b$y, "x̃₁  (stratio, control removed)", "math",
        "C. math on x̃₁", sprintf("slope %+.3f", b$fwl))
   })
 
@@ -198,18 +198,18 @@ server <- function(input, output, session) {
     par(mar = c(0, 0, 2.2, 0), bg = "white")
     plot(NA, xlim = c(-1.5, 1.5), ylim = c(-1.15, 1.25), axes = FALSE,
          xlab = "", ylab = "",
-         main = sprintf("The Ballentine:  overlap of studteachr and %s  (r = %.2f)",
+         main = sprintf("The Ballentine:  overlap of stratio and %s  (r = %.2f)",
                         b$c2, b$r),
          col.main = navy, cex.main = 1.2)
     circ(yx, yy, navy)          # y
-    circ(cx1, cy, garnet)       # x1 = studteachr
+    circ(cx1, cy, garnet)       # x1 = stratio
     circ(cx2, cy, steel)        # x2 = the control
     text(yx, yy + 0.42, "math", col = navy, font = 2, cex = 1.1)
-    text(cx1 - 0.30, cy - 0.46, "studteachr", col = garnet, font = 2, cex = 1.1)
+    text(cx1 - 0.30, cy - 0.46, "stratio", col = garnet, font = 2, cex = 1.1)
     text(cx2 + 0.30, cy - 0.46, b$c2, col = steel, font = 2, cex = 1.1)
     ## Label positions follow the annex, section 5.1: A is the part of
-    ## studteachr inside math but NOT shared with the control, B the part
-    ## inside neither, D+E what studteachr shares with the control. So A must
+    ## stratio inside math but NOT shared with the control, B the part
+    ## inside neither, D+E what stratio shares with the control. So A must
     ## sit LEFT of the control circle's left edge (cx2 - r) and still inside
     ## the math circle -- hence the clamp. Both move as the overlap changes.
     ax <- max(-0.42, cx2 - r - 0.16)

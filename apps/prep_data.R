@@ -22,8 +22,18 @@ stopifnot(file.exists(src))
 e <- new.env(); load(src, envir = e)
 d <- as.data.frame(get("caschools", envir = e))
 
-keep <- c("math", "studteachr", "income", "lunch", "english", "expenditure")
-d <- d[stats::complete.cases(d[, keep]), keep]
+src_keep <- c("math", "studteachr", "income", "lunch", "english", "expenditure")
+d <- d[stats::complete.cases(d[, src_keep]), src_keep]
+
+# RENAMED 2026-09-09 (Cristina): studteachr -> stratio, on the way OUT only.
+# The student-facing name of students/teachers is fixed as stratio: it is what
+# the Unit 2 hand-out builds (ca$stratio <- ca$students / ca$teachers) and what
+# the Unit 3 practice will use, so students meet ONE name for this variable
+# across the whole course. Not "str": str() is a base R function, and beginners
+# meet both. caschools.RData keeps its own column name -- only what leaves this
+# script is renamed, so nothing upstream is touched.
+names(d)[names(d) == "studteachr"] <- "stratio"
+keep <- sub("^studteachr$", "stratio", src_keep)
 
 # ---- the 7 districts drawn in the least-squares app -------------------
 # WHY SEVEN, AND WHY SPREAD OUT. The squares are drawn to scale, so their
@@ -62,8 +72,8 @@ utils::write.csv(d[, c(keep, "teach7")], out, row.names = FALSE)
 cat("wrote", out, "-", nrow(d), "districts,", sum(d$teach7), "flagged for the least-squares app\n\n")
 
 ## ---- the numbers the app asserts, printed so they can be checked ----
-s <- lm(math ~ studteachr, d)
-cat(sprintf("simple:    math = %.2f %+.3f studteachr     (n = %d)\n",
+s <- lm(math ~ stratio, d)
+cat(sprintf("simple:    math = %.2f %+.3f stratio     (n = %d)\n",
             coef(s)[1], coef(s)[2], nrow(d)))
 d7 <- d[d$teach7, ]
 s7 <- lm(math ~ income, d7)
@@ -73,9 +83,9 @@ cat(sprintf("           full-sample math ~ income: slope %+.3f, R2 %.3f\n\n",
             coef(lm(math ~ income, d))[2], summary(lm(math ~ income, d))$r.squared))
 
 cat("Annex 5.2:  b1_simple = b1_multiple + b2 * delta1\n")
-for (c2 in setdiff(keep, c("math", "studteachr"))) {
-  m  <- lm(as.formula(paste("math ~ studteachr +", c2)), d)
-  dl <- coef(lm(as.formula(paste(c2, "~ studteachr")), d))[2]
+for (c2 in setdiff(keep, c("math", "stratio"))) {
+  m  <- lm(as.formula(paste("math ~ stratio +", c2)), d)
+  dl <- coef(lm(as.formula(paste(c2, "~ stratio")), d))[2]
   cat(sprintf("  %-12s b1=%7.3f  b2=%8.3f  delta1=%10.4f  ->  %7.3f\n",
               c2, coef(m)[2], coef(m)[3], dl, coef(m)[2] + coef(m)[3] * dl))
 }
