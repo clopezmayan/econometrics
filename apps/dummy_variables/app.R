@@ -115,7 +115,14 @@ ui <- fluidPage(
         )
       )
     )
-  )
+  ),
+  # ADDED 2026-09-09 (Cristina): the data credit belongs inside the app that
+  # uses the data, not in the public repo README.
+  hr(),
+  helpText(style = "font-size:12px;",
+           "Data: INE, Encuesta de Estructura Salarial 2022 \u2014 teaching extract of ",
+           "50,000 employees, drawn to be self-weighting. Source microdata freely ",
+           "available at www.ine.es.")
 )
 
 ## ====================  SERVER  ==============================

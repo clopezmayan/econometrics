@@ -126,7 +126,13 @@ ui <- fluidPage(
               div(class = "note", style = "padding-top:6px;",
                   textOutput("verdict", inline = TRUE)))
           )),
-      plotOutput("plot", height = "440px")
+      plotOutput("plot", height = "440px"),
+      hr(),
+      p(class = "note", style = "font-size:12px;",
+        strong("Data."), " California Test Score Data — 420 school districts. ",
+        "Online complements to Stock, J. H. and Watson, M. W. (2007), ",
+        em("Introduction to Econometrics"), ", 2nd ed., Addison Wesley; ",
+        "distributed in the R package ", code("AER"), " as ", code("CASchools"), ".")
     )
   )
 )

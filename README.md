@@ -46,8 +46,3 @@ change.
 
 A second tab estimates the gender wage gap on real Spanish earnings data, with control
 variables that can be switched on and off, next to the group means.
-
----
-
-**Data.** CAschools (California school districts) and a teaching extract of INE's *Encuesta
-de Estructura Salarial* 2022. Both are public datasets used here for teaching.

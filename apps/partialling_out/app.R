@@ -99,7 +99,13 @@ ui <- fluidPage(
       width = 9,
       plotOutput("panels", height = "300px"),
       div(class = "box", uiOutput("identity")),
-      conditionalPanel("input.venn", plotOutput("venn", height = "300px"))
+      conditionalPanel("input.venn", plotOutput("venn", height = "300px")),
+      hr(),
+      p(class = "note", style = "font-size:12px;",
+        strong("Data."), " California Test Score Data — 420 school districts. ",
+        "Online complements to Stock, J. H. and Watson, M. W. (2007), ",
+        em("Introduction to Econometrics"), ", 2nd ed., Addison Wesley; ",
+        "distributed in the R package ", code("AER"), " as ", code("CASchools"), ".")
     )
   )
 )
