@@ -123,11 +123,14 @@ css <- sprintf("
   .howto h4 { margin:0 0 6px 0; font-size:15px; font-weight:700; color:%s; }
   .howto ol { padding-left:18px; margin-bottom:6px; }
   .howto li { font-size:13px; margin-bottom:5px; line-height:1.35; }
+  .howmade { background:%s; border-left:4px solid %s; border-radius:4px;
+             padding:9px 12px; margin:4px 0 12px 0; font-size:12.5px;
+             color:#3a3a36; line-height:1.4; }
   .ssrnum { font-size:34px; font-weight:700; color:%s; line-height:1.15; }
   .note { color:%s; font-size:13px; }
   .truebox { font-size:17px; font-weight:600; color:%s; }
   .estbox  { font-size:17px; font-weight:600; color:%s; }
-  h2 { color:%s; }", soft, navy, navy, navy, garnet, muted, garnet, navy, navy)
+  h2 { color:%s; }", soft, navy, navy, navy, soft, garnet, garnet, muted, garnet, navy, navy)
 
 ## ---------------- page 1 ----------------
 page1 <- tabPanel(
@@ -150,8 +153,8 @@ page1 <- tabPanel(
                   " of a square is that residual, squared."),
           tags$li("Read the SSR above the graph: it is the total shaded area."),
           tags$li("Try to make the SSR as small as you can."),
-          tags$li("Then press ", strong("Show me the OLS line"),
-                  ". No line you set by hand has a smaller SSR.")
+          tags$li(HTML("Then press <strong>Show me the OLS line</strong>. No line you
+                        set by hand has a smaller SSR."))
         )),
       p(strong("Move the line by hand:")),
       sliderInput("b0", "Intercept  b₀", min = 580, max = 700, value = 660, step = 1),
@@ -189,10 +192,10 @@ page1 <- tabPanel(
       plotOutput("plot", height = "440px"),
       hr(),
       p(class = "note", style = "font-size:12px;",
-        strong("Data."), " California Test Score Data — 420 school districts. ",
-        "Online complements to Stock, J. H. and Watson, M. W. (2007), ",
-        em("Introduction to Econometrics"), ", 2nd ed., Addison Wesley; ",
-        "distributed in the R package ", code("AER"), " as ", code("CASchools"), ".")
+        HTML("<strong>Data.</strong> California Test Score Data — 420 school districts.
+              Online complements to Stock, J. H. and Watson, M. W. (2007),
+              <em>Introduction to Econometrics</em>, 2nd ed., Addison Wesley; distributed
+              in the R package <code>AER</code> as <code>CASchools</code>."))
     )
   )
 )
@@ -203,9 +206,9 @@ page2 <- tabPanel(
   p(class = "note",
     "Econometrics I · Unit 2 · the simple regression model. ",
     strong("These data are invented."),
-    " We chose the population ourselves, so for once we know the truth: ",
-    "y = 10 + 2x + u. With real data you never see the line below in ",
-    span(style = sprintf("color:%s;font-weight:600;", garnet), "orange"), "."),
+    HTML(sprintf("We chose the population ourselves, so for once we know the truth:
+                  y = 10 + 2x + u. With real data you never see the line below in
+                  <span style='color:%s;font-weight:600;'>orange</span>.", garnet))),
 
   sidebarLayout(
     sidebarPanel(
@@ -217,11 +220,11 @@ page2 <- tabPanel(
                   " (2000 individuals). The ",
                   span(style = sprintf("color:%s;font-weight:600;", garnet), "orange line"),
                   " is the ", strong("true"), " line."),
-          tags$li("Press ", strong("Draw a new sample"),
-                  ": the app takes n individuals at random. They are the dark points."),
-          tags$li("The ",
-                  span(style = sprintf("color:%s;font-weight:600;", navy), "green line"),
-                  " is the OLS line computed from that sample ", em("only"), "."),
+          tags$li(HTML("Press <strong>Draw a new sample</strong>: the app takes n
+                        individuals at random. They are the dark points.")),
+          tags$li(HTML(sprintf(
+                  "The <span style='color:%s;font-weight:600;'>green line</span> is the
+                   OLS line computed from that sample <em>only</em>.", navy))),
           tags$li("Compare the two lines, and the two pairs of numbers above the graph."),
           tags$li("Press the button again. The sample changes and the green line moves. ",
                   "The orange line never moves: it is not estimated, it is the truth.")
@@ -235,6 +238,14 @@ page2 <- tabPanel(
         choices = c("Residuals  e = y − ŷ" = "e",
                     "Errors  u = y − (β₀ + β₁x)" = "u"),
         selected = "e"),
+      div(class = "howmade",
+        strong("How the errors were produced."),
+        " Every individual in the population received an error ", strong("u"),
+        " drawn at random from a normal distribution with mean 0 and standard ",
+        "deviation 5. The draw does not depend on x.",
+        br(), br(),
+        HTML("Mean 0 is a property of the <em>rule</em>, not of the numbers it produced:
+              in any sample the errors do <strong>not</strong> average exactly zero.")),
       p(class = "note",
         strong("What to look at."),
         " The residual is the distance to the ",
