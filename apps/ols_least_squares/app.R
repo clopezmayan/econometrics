@@ -247,15 +247,7 @@ page2 <- tabPanel(
         " line; the error is the distance to the ",
         span(style = sprintf("color:%s;font-weight:600;", garnet), "orange"),
         " line. They are not the same thing. We can compute the residual from ",
-        "the sample; we can see the error only because we invented the population."),
-      div(class = "howmade",
-        strong("How the errors were produced."),
-        HTML(" Every individual in the population received an error drawn at random from
-              a normal distribution, independently of x:"),
-        div(class = "howmade-eq", HTML("u &sim; N(0, &sigma; = 5)")),
-        HTML("Mean 0 is a property of the <em>rule</em>, not of the numbers it produced:
-              in any sample the errors do <strong>not</strong> average exactly zero. In
-              this population of 2000 they average &minus;0.12."))
+        "the sample; we can see the error only because we invented the population.")
     ),
 
     mainPanel(
@@ -274,10 +266,14 @@ page2 <- tabPanel(
       plotOutput("plot2", height = "330px"),
       plotOutput("plot2r", height = "210px"),
       div(class = "box", textOutput("residnote")),
-      hr(),
-      p(class = "note", style = "font-size:12px;",
-        strong("Invented data."), " x is drawn between 2 and 18 and the errors are normal ",
-        "with mean zero and standard deviation 5. Nothing here is a real population.")
+      div(class = "howmade",
+        strong("How the errors were produced."),
+        HTML(" Every individual in the population received an error drawn at random from
+              a normal distribution, independently of x:"),
+        div(class = "howmade-eq", HTML("u &sim; N(0, &sigma; = 5)")),
+        HTML("Mean 0 is a property of the <em>rule</em>, not of the numbers it produced:
+              in any sample the errors do <strong>not</strong> average exactly zero. In
+              this population of 2000 they average &minus;0.12."))
     )
   )
 )
