@@ -126,11 +126,13 @@ css <- sprintf("
   .howmade { background:%s; border-left:4px solid %s; border-radius:4px;
              padding:9px 12px; margin:4px 0 12px 0; font-size:12.5px;
              color:#3a3a36; line-height:1.4; }
+  .howmade-eq { text-align:center; font-size:15px; padding:7px 0 5px 0;
+                color:%s; font-weight:600; }
   .ssrnum { font-size:34px; font-weight:700; color:%s; line-height:1.15; }
   .note { color:%s; font-size:13px; }
   .truebox { font-size:17px; font-weight:600; color:%s; }
   .estbox  { font-size:17px; font-weight:600; color:%s; }
-  h2 { color:%s; }", soft, navy, navy, navy, soft, garnet, garnet, muted, garnet, navy, navy)
+  h2 { color:%s; }", soft, navy, navy, navy, soft, garnet, garnet, garnet, muted, garnet, navy, navy)
 
 ## ---------------- page 1 ----------------
 page1 <- tabPanel(
@@ -238,14 +240,6 @@ page2 <- tabPanel(
         choices = c("Residuals  e = y − ŷ" = "e",
                     "Errors  u = y − (β₀ + β₁x)" = "u"),
         selected = "e"),
-      div(class = "howmade",
-        strong("How the errors were produced."),
-        " Every individual in the population received an error ", strong("u"),
-        " drawn at random from a normal distribution with mean 0 and standard ",
-        "deviation 5. The draw does not depend on x.",
-        br(), br(),
-        HTML("Mean 0 is a property of the <em>rule</em>, not of the numbers it produced:
-              in any sample the errors do <strong>not</strong> average exactly zero.")),
       p(class = "note",
         strong("What to look at."),
         " The residual is the distance to the ",
@@ -253,7 +247,15 @@ page2 <- tabPanel(
         " line; the error is the distance to the ",
         span(style = sprintf("color:%s;font-weight:600;", garnet), "orange"),
         " line. They are not the same thing. We can compute the residual from ",
-        "the sample; we can see the error only because we invented the population.")
+        "the sample; we can see the error only because we invented the population."),
+      div(class = "howmade",
+        strong("How the errors were produced."),
+        HTML(" Every individual in the population received an error drawn at random from
+              a normal distribution, independently of x:"),
+        div(class = "howmade-eq", HTML("u &sim; N(0, &sigma; = 5)")),
+        HTML("Mean 0 is a property of the <em>rule</em>, not of the numbers it produced:
+              in any sample the errors do <strong>not</strong> average exactly zero. In
+              this population of 2000 they average &minus;0.12."))
     ),
 
     mainPanel(
