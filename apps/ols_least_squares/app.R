@@ -1,29 +1,42 @@
 # ============================================================
 #  Econometrics I 26-27 — Unit 2
-#  "What least squares minimizes"
+#  Two pages, one app:
+#    1. "What least squares minimizes"  (CAschools, 7 districts)
+#    2. "The true line and the sample line"  (simulated)
 #
-#  Unit 2's objectives frame promises that students will
-#  "obtain the OLS estimates, and know exactly what 'least
-#  squares' minimizes". The deck states the criterion; nothing
-#  in it SHOWS the squares. This app does.
+#  WHY TWO PAGES AND NOT TWO APPS (Cristina, 15 Sep). The 9 Sep
+#  rule "one topic, one app -- do NOT merge these into a tabbed
+#  app" was about NOT putting Unit 2's tool and Unit 3's tool in
+#  one window. It still stands: partialling_out/ stays its own
+#  site. These two pages are both UNIT 2, both about the same
+#  fitted line, and they are meant to be met in order -- page 1
+#  says what OLS minimizes, page 2 says what OLS is estimating.
+#  Each page carries its own "How to use", so a student who opens
+#  the link alone knows what to do.
 #
-#  Move the line by hand. Every residual is drawn as a real
-#  square, to scale, so its AREA is the residual squared. Their
-#  total area is the SSR, shown as one number. Then press the
-#  button: OLS is lower than anything you found by hand.
+#  PAGE 2, WHY SIMULATED DATA. With CAschools there is no true
+#  line to draw: it does not exist as anything observable. The
+#  whole point of page 2 is to show the one picture real data can
+#  never give -- the population line next to the sample line --
+#  and to separate the ERROR u (distance to the true line) from
+#  the RESIDUAL e (distance to the fitted line). Students leave
+#  this course believing those are the same object.
 #
-#  ONE TOPIC, ONE APP (Cristina, 9 Sep): each tool is its own
-#  site with its own link and QR on the Campus, so students meet
-#  them one at a time. Do NOT merge these into a tabbed app.
+#  DELIBERATELY NOT HERE: the histogram of b1 over many samples
+#  (Cristina, 15 Sep). Repeated sampling and the sampling
+#  distribution are UNIT 5's, and the R scripts for them already
+#  exist. Page 2 shows ONE sample at a time. Do not add it.
 #
-#  WORKS UNATTENDED (Cristina, 9 Sep): used both in class and by
-#  students at home, so the panel says what to look at and the
-#  defaults already pose the problem.
+#  REPRODUCIBLE. Page 1 has a fixed seed. Page 2 draws its
+#  population once from a fixed seed, and each new sample uses
+#  the click counter as its seed, so reloading the page and
+#  clicking the same number of times gives the same picture in
+#  class and at home. sigma only RESCALES the errors (the x's and
+#  the standard normal draws are fixed), so moving the slider
+#  stretches the cloud instead of reshuffling it.
 #
-#  DATA: CAschools, the Unit 2-3 spine (PLAN Phase 02b). Seven
-#  districts, spread across the income range, fixed seed -- the
-#  picture is identical in class and at home. See prep_data.R for
-#  why seven and why spread.
+#  BASE R ONLY -- no package beyond shiny, so shinylive/webr
+#  needs nothing extra.
 #
 #  Run:     shiny::runApp("ols_least_squares")
 #  Publish: shinylive::export("ols_least_squares", "_site_ols_least_squares")
@@ -42,7 +55,9 @@ muted  <- "#6B6B66"
 soft   <- "#F1F3F0"
 steel  <- "#4F7088"
 
-## ---- data -------------------------------------------------
+## ============================================================
+##  PAGE 1 DATA -- CAschools, seven districts
+## ============================================================
 data_path <- function(f) {
   cand <- c(f, file.path("ols_least_squares", f))
   hit  <- cand[file.exists(cand)]
@@ -72,17 +87,40 @@ gv    <- mapply(ssr, grid$b0, grid$b1)
 gbest <- grid[which.min(gv), ]
 SSRg  <- min(gv)                       # 1736.45, vs 1735.87 unconstrained
 
-## ====================  USER INTERFACE  ======================
-ui <- fluidPage(
-  tags$style(HTML(sprintf("
-    body { background:%s; }
-    .box  { background:white; border:1px solid #e0e0dd; border-radius:6px;
-            padding:10px 14px; margin-bottom:8px; }
-    .ssrnum { font-size:34px; font-weight:700; color:%s; line-height:1.15; }
-    .note { color:%s; font-size:13px; }
-    h2 { color:%s; }", soft, garnet, muted, navy))),
+## ============================================================
+##  PAGE 2 POPULATION -- invented on purpose
+## ============================================================
+## An INVENTED population, not real data. That is the point: we
+## can only compare the fitted line with the truth if we are the
+## ones who chose the truth. x and the standard normal draws are
+## fixed here, once; sigma multiplies the draws later, so the
+## slider stretches the cloud instead of resampling it.
+NPOP <- 2000
+TB0  <- 10      # the true intercept
+TB1  <- 2       # the true slope
+set.seed(20262027)
+xpop <- round(runif(NPOP, 2, 18), 2)
+zpop <- rnorm(NPOP)
 
-  titlePanel("What least squares minimizes"),
+## ====================  USER INTERFACE  ======================
+css <- sprintf("
+  body { background:%s; }
+  .box  { background:white; border:1px solid #e0e0dd; border-radius:6px;
+          padding:10px 14px; margin-bottom:8px; }
+  .howto { background:white; border:1px solid %s; border-left:5px solid %s;
+           border-radius:6px; padding:10px 14px 4px 14px; margin-bottom:12px; }
+  .howto h4 { margin:0 0 6px 0; font-size:15px; font-weight:700; color:%s; }
+  .howto ol { padding-left:18px; margin-bottom:6px; }
+  .howto li { font-size:13px; margin-bottom:5px; line-height:1.35; }
+  .ssrnum { font-size:34px; font-weight:700; color:%s; line-height:1.15; }
+  .note { color:%s; font-size:13px; }
+  .truebox { font-size:17px; font-weight:600; color:%s; }
+  .estbox  { font-size:17px; font-weight:600; color:%s; }
+  h2 { color:%s; }", soft, navy, navy, navy, garnet, muted, garnet, navy, navy)
+
+## ---------------- page 1 ----------------
+page1 <- tabPanel(
+  "1. What least squares minimizes",
   p(class = "note",
     "Econometrics I · Unit 2 · the simple regression model. ",
     "California school districts: ", strong("math"),
@@ -93,6 +131,17 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       width = 4,
+      div(class = "howto",
+        h4("How to use this page"),
+        tags$ol(
+          tags$li("Move the two sliders to put the line among the points."),
+          tags$li("Each residual is drawn as a square. The ", em("area"),
+                  " of a square is that residual, squared."),
+          tags$li("Read the SSR above the graph: it is the total shaded area."),
+          tags$li("Try to make the SSR as small as you can."),
+          tags$li("Then press ", strong("Show me the OLS line"),
+                  ". No line you set by hand has a smaller SSR.")
+        )),
       p(strong("Move the line by hand:")),
       sliderInput("b0", "Intercept  b₀", min = 580, max = 700, value = 660, step = 1),
       sliderInput("b1", "Slope  b₁",     min = -1,  max = 4,   value = 0,   step = 0.05),
@@ -137,9 +186,89 @@ ui <- fluidPage(
   )
 )
 
+## ---------------- page 2 ----------------
+page2 <- tabPanel(
+  "2. The true line and the sample line",
+  p(class = "note",
+    "Econometrics I · Unit 2 · the simple regression model. ",
+    strong("These data are invented."),
+    " We chose the population ourselves, so for once we know the truth: ",
+    "y = 10 + 2x + u. With real data you never see the line below in ",
+    span(style = sprintf("color:%s;font-weight:600;", garnet), "orange"), "."),
+
+  sidebarLayout(
+    sidebarPanel(
+      width = 4,
+      div(class = "howto",
+        h4("How to use this page"),
+        tags$ol(
+          tags$li("The pale grey cloud is the whole ", strong("population"),
+                  " (2000 individuals). The ",
+                  span(style = sprintf("color:%s;font-weight:600;", garnet), "orange line"),
+                  " is the ", strong("true"), " line."),
+          tags$li("Press ", strong("Draw a new sample"),
+                  ": the app takes n individuals at random. They are the dark points."),
+          tags$li("The ",
+                  span(style = sprintf("color:%s;font-weight:600;", navy), "green line"),
+                  " is the OLS line computed from that sample ", em("only"), "."),
+          tags$li("Compare the two lines, and the two pairs of numbers above the graph."),
+          tags$li("Press the button again. The sample changes and the green line moves. ",
+                  "The orange line never moves: it is not estimated, it is the truth.")
+        )),
+      actionButton("newsample", "Draw a new sample", class = "btn-primary"),
+      br(), br(),
+      sliderInput("n", "Sample size  n", min = 10, max = 200, value = 25, step = 5),
+      sliderInput("sigma", "Spread of the errors  σ", min = 1, max = 12, value = 5, step = 1),
+      checkboxInput("showpop", "Show the whole population", TRUE),
+      hr(),
+      radioButtons("resid_kind", "Lower graph shows:",
+        choices = c("Residuals  e = y − ŷ" = "e",
+                    "Errors  u = y − (β₀ + β₁x)" = "u"),
+        selected = "e"),
+      p(class = "note",
+        strong("What to look at."),
+        " The residual is the distance to the ",
+        span(style = sprintf("color:%s;font-weight:600;", navy), "green"),
+        " line; the error is the distance to the ",
+        span(style = sprintf("color:%s;font-weight:600;", garnet), "orange"),
+        " line. They are not the same thing. We can compute the residual from ",
+        "the sample; we can see the error only because we invented the population.")
+    ),
+
+    mainPanel(
+      width = 8,
+      div(class = "box",
+          fluidRow(
+            column(6,
+              div(class = "note", "The truth (we chose it)"),
+              div(class = "truebox", textOutput("trueeq", inline = TRUE))),
+            column(6,
+              div(class = "note", "The OLS estimate from this sample"),
+              div(class = "estbox", textOutput("esteq", inline = TRUE)))
+          ),
+          div(class = "note", style = "padding-top:8px;",
+              textOutput("gapmsg", inline = TRUE))),
+      plotOutput("plot2", height = "330px"),
+      plotOutput("plot2r", height = "210px"),
+      div(class = "box", textOutput("residnote")),
+      hr(),
+      p(class = "note", style = "font-size:12px;",
+        strong("Invented data."), " x is drawn between 2 and 18 and the errors are normal ",
+        "with mean zero and standard deviation σ. Nothing here is a real population.")
+    )
+  )
+)
+
+ui <- navbarPage(
+  title = "Econometrics I · Unit 2 · the regression line",
+  header = tags$style(HTML(css)),
+  page1, page2
+)
+
 ## ====================  SERVER  ==============================
 server <- function(input, output, session) {
 
+  ## ---------------- page 1 ----------------
   best    <- reactiveVal(Inf)
   current <- reactive(ssr(input$b0, input$b1))
 
@@ -206,6 +335,85 @@ server <- function(input, output, session) {
     segments(x, y, x, yh, col = muted, lty = 3)
     abline(a = b0, b = b1, col = navy, lwd = 3)
     points(x, y, pch = 21, bg = steel, col = "white", cex = 1.7, lwd = 1.5)
+  })
+
+  ## ---------------- page 2 ----------------
+  ## The population. sigma only rescales the FIXED standard normal draws, so
+  ## moving the slider stretches the cloud vertically -- it does not reshuffle
+  ## the points, and the true line stays where it is.
+  pop <- reactive({
+    data.frame(x = xpop, y = TB0 + TB1 * xpop + input$sigma * zpop,
+               u = input$sigma * zpop)
+  })
+
+  ## Seeded by the click counter, so the same number of clicks gives the same
+  ## sample in class and at home.
+  samp <- reactive({
+    set.seed(1000 + input$newsample)
+    p <- pop()
+    p[sample.int(NPOP, input$n), ]
+  })
+
+  m2 <- reactive({
+    s <- samp()
+    lm(y ~ x, data = s)
+  })
+
+  output$trueeq <- renderText(sprintf("y = %d + %d x + u", TB0, TB1))
+  output$esteq  <- renderText({
+    cf <- coef(m2())
+    sprintf("ŷ = %.2f %+.2f x", cf[1], cf[2])
+  })
+  output$gapmsg <- renderText({
+    cf <- coef(m2())
+    sprintf("The estimated slope misses the true slope by %.2f. Draw another sample and it will miss by a different amount, in a different direction. n = %d.",
+            cf[2] - TB1, input$n)
+  })
+
+  output$plot2 <- renderPlot({
+    p <- pop(); s <- samp(); cf <- coef(m2())
+    par(mar = c(4.2, 4.6, 0.6, 1), bg = "white")
+    plot(NA, xlim = range(xpop), ylim = range(p$y), las = 1,
+         xlab = "x", ylab = "y", col.lab = navy, cex.lab = 1.15, cex.axis = 1.05)
+    if (isTRUE(input$showpop))
+      points(p$x, p$y, pch = 16, cex = 0.5, col = adjustcolor(muted, alpha.f = 0.20))
+    segments(s$x, s$y, s$x, cf[1] + cf[2] * s$x, col = muted, lty = 3)
+    abline(a = TB0, b = TB1, col = garnet, lwd = 3)
+    abline(a = cf[1], b = cf[2], col = navy, lwd = 3)
+    points(s$x, s$y, pch = 21, bg = steel, col = "white", cex = 1.4, lwd = 1.2)
+    legend("topleft", bty = "n", lwd = 3, cex = 1.05,
+           col = c(garnet, navy),
+           legend = c("true line  y = 10 + 2x", "OLS line from this sample"))
+  })
+
+  ## The one number that separates a residual from an error: the residuals of
+  ## an OLS fit with an intercept ALWAYS add up to zero, in every sample; the
+  ## errors do not, and nothing makes them.
+  output$residnote <- renderText({
+    s <- samp(); cf <- coef(m2())
+    if (input$resid_kind == "e") {
+      ## floating point leaves a value like -3e-15, which sprintf prints as
+      ## "-0.00" -- exactly the thing a student would stop and worry about.
+      se <- sum(s$y - (cf[1] + cf[2] * s$x))
+      if (abs(se) < 1e-8) se <- 0
+      sprintf("The residuals add up to %.2f. They always add up to zero — that is a property of the OLS line, true in every sample.", se)
+    } else {
+      sprintf("The errors add up to %.2f, not to zero. Nothing makes them: they are what the population happened to give these %d individuals.",
+              sum(s$u), input$n)
+    }
+  })
+
+  output$plot2r <- renderPlot({
+    s <- samp(); cf <- coef(m2())
+    v   <- if (input$resid_kind == "e") s$y - (cf[1] + cf[2] * s$x) else s$u
+    col <- if (input$resid_kind == "e") navy else garnet
+    lab <- if (input$resid_kind == "e") "Residual  e" else "Error  u"
+    par(mar = c(4.2, 4.6, 0.6, 1), bg = "white")
+    plot(NA, xlim = range(xpop), ylim = max(abs(v)) * c(-1.15, 1.15), las = 1,
+         xlab = "x", ylab = lab, col.lab = navy, cex.lab = 1.15, cex.axis = 1.05)
+    abline(h = 0, col = muted, lwd = 2)
+    segments(s$x, 0, s$x, v, col = adjustcolor(col, alpha.f = 0.55))
+    points(s$x, v, pch = 21, bg = col, col = "white", cex = 1.3, lwd = 1.2)
   })
 }
 
