@@ -31,9 +31,20 @@
 #  population once from a fixed seed, and each new sample uses
 #  the click counter as its seed, so reloading the page and
 #  clicking the same number of times gives the same picture in
-#  class and at home. sigma only RESCALES the errors (the x's and
-#  the standard normal draws are fixed), so moving the slider
-#  stretches the cloud instead of reshuffling it.
+#  class and at home.
+#
+#  SIGMA IS FIXED AT 5, AND THERE IS NO SLIDER FOR IT (Cristina,
+#  15 Sep: "too much info on the same page"). Moving sigma teaches
+#  how the error variance drives the PRECISION of the estimator --
+#  Var(b1) = sigma^2 / SST_x. That is the width of the sampling
+#  distribution reached by a slider instead of by a histogram, so
+#  it belongs with the histogram in UNIT 5, and it also needs
+#  sigma^2, which students do not meet until Unit 4. Page 2 keeps
+#  one message: the estimate is not the truth.
+#  If it is ever wanted back: add the sliderInput and put
+#  input$sigma where SIGMA is. The standard normal draws are fixed
+#  once, so sigma only RESCALES them -- the cloud stretches and
+#  the true line stays put, instead of the data reshuffling.
 #
 #  BASE R ONLY -- no package beyond shiny, so shinylive/webr
 #  needs nothing extra.
@@ -93,11 +104,11 @@ SSRg  <- min(gv)                       # 1736.45, vs 1735.87 unconstrained
 ## An INVENTED population, not real data. That is the point: we
 ## can only compare the fitted line with the truth if we are the
 ## ones who chose the truth. x and the standard normal draws are
-## fixed here, once; sigma multiplies the draws later, so the
-## slider stretches the cloud instead of resampling it.
-NPOP <- 2000
-TB0  <- 10      # the true intercept
-TB1  <- 2       # the true slope
+## fixed here, once, and SIGMA multiplies them.
+NPOP  <- 2000
+TB0   <- 10     # the true intercept
+TB1   <- 2      # the true slope
+SIGMA <- 5      # the standard deviation of the errors -- FIXED, see below
 set.seed(20262027)
 xpop <- round(runif(NPOP, 2, 18), 2)
 zpop <- rnorm(NPOP)
@@ -218,7 +229,6 @@ page2 <- tabPanel(
       actionButton("newsample", "Draw a new sample", class = "btn-primary"),
       br(), br(),
       sliderInput("n", "Sample size  n", min = 10, max = 200, value = 25, step = 5),
-      sliderInput("sigma", "Spread of the errors  σ", min = 1, max = 12, value = 5, step = 1),
       checkboxInput("showpop", "Show the whole population", TRUE),
       hr(),
       radioButtons("resid_kind", "Lower graph shows:",
@@ -254,7 +264,7 @@ page2 <- tabPanel(
       hr(),
       p(class = "note", style = "font-size:12px;",
         strong("Invented data."), " x is drawn between 2 and 18 and the errors are normal ",
-        "with mean zero and standard deviation σ. Nothing here is a real population.")
+        "with mean zero and standard deviation 5. Nothing here is a real population.")
     )
   )
 )
@@ -338,12 +348,12 @@ server <- function(input, output, session) {
   })
 
   ## ---------------- page 2 ----------------
-  ## The population. sigma only rescales the FIXED standard normal draws, so
-  ## moving the slider stretches the cloud vertically -- it does not reshuffle
-  ## the points, and the true line stays where it is.
+  ## The population never changes now that sigma is fixed. Kept as a reactive
+  ## because samp() reads it, and because a sigma control is one line away if
+  ## it is ever wanted back (see the note at the top).
   pop <- reactive({
-    data.frame(x = xpop, y = TB0 + TB1 * xpop + input$sigma * zpop,
-               u = input$sigma * zpop)
+    data.frame(x = xpop, y = TB0 + TB1 * xpop + SIGMA * zpop,
+               u = SIGMA * zpop)
   })
 
   ## Seeded by the click counter, so the same number of clicks gives the same
