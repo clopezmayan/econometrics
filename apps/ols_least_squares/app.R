@@ -111,7 +111,25 @@ TB1   <- 2      # the true slope
 SIGMA <- 5      # the standard deviation of the errors -- FIXED, see below
 set.seed(20262027)
 xpop <- round(runif(NPOP, 2, 18), 2)
-zpop <- rnorm(NPOP)
+
+## THESE 2000 INDIVIDUALS *ARE* THE POPULATION, so the population has to satisfy
+## the model exactly (Cristina, 15 Sep). Raw normal draws do not: they average
+## -0.1235, and the OLS line through all 2000 is 9.52 + 2.0355x, not 10 + 2x. A
+## student told "this is the whole population" and then shown that E(u) = 0 is
+## right to object, because over a POPULATION E(u) is just the average of u.
+##
+## So the draws are centred and made orthogonal to x, then scaled back to SIGMA.
+## In the population that gives, exactly: mean(u) = 0, cor(x, u) = 0, sd(u) = 5,
+## and a population regression line of exactly y = 10 + 2x. The orange line is
+## then both the rule that generated the data and the OLS line through all 2000
+## -- there is no version of "the truth" left to argue about.
+##
+## It costs two degrees of freedom out of 2000, and nothing that matters: in any
+## SAMPLE the errors still do not average zero (about +-0.8 at n = 25) and b1
+## still moves from sample to sample. That is the whole lesson, and it survives.
+zraw <- rnorm(NPOP)
+zres <- resid(lm(zraw ~ xpop))
+zpop <- zres / sd(zres)
 
 ## ====================  USER INTERFACE  ======================
 css <- sprintf("
@@ -271,9 +289,10 @@ page2 <- tabPanel(
         HTML(" Every individual in the population received an error drawn at random from
               a normal distribution, independently of x:"),
         div(class = "howmade-eq", HTML("u &sim; N(0, &sigma; = 5)")),
-        HTML("Mean 0 is a property of the <em>rule</em>, not of the numbers it produced:
-              in any sample the errors do <strong>not</strong> average exactly zero. In
-              this population of 2000 they average &minus;0.12."))
+        HTML("Across the whole population the errors average exactly 0 &mdash; that is what
+              E(u) = 0 means. In <em>your sample</em> they do not, because a sample is only
+              a part of the population. The residuals, by contrast, add up to zero in
+              <strong>every</strong> sample."))
     )
   )
 )
@@ -417,7 +436,7 @@ server <- function(input, output, session) {
       if (abs(se) < 1e-8) se <- 0
       sprintf("The residuals add up to %.2f. They always add up to zero — that is a property of the OLS line, true in every sample.", se)
     } else {
-      sprintf("The errors add up to %.2f, not to zero. Nothing makes them: they are what the population happened to give these %d individuals.",
+      sprintf("The errors add up to %.2f. Over the whole population they add up to zero, but these %d individuals are only a part of it.",
               sum(s$u), input$n)
     }
   })
