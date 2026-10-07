@@ -55,7 +55,8 @@ CONTROLS <- c("District income"          = "income",
               "% English learners"       = "english",
               "Spending per pupil"       = "expenditure")
 
-SIMPLE <- unname(coef(lm(math ~ stratio, ca))[2])   # -1.939, never changes
+SIMPLE   <- unname(coef(lm(math ~ stratio, ca))[2])   # -1.939, never changes
+SIMPLE_A <- unname(coef(lm(math ~ stratio, ca))[1])   # 691.42
 
 ## ====================  USER INTERFACE  ======================
 ## LAYOUT FOLLOWS THE UNIT 2 APP (Cristina, 7 Oct): navbar title, a one-line
@@ -101,8 +102,8 @@ page <- tabPanel(
                         residuals are stratio with the control removed. We call them
                         x&#771;<sub>1</sub>.")),
           tags$li(HTML("<strong>Panel C</strong> regresses math on x&#771;<sub>1</sub>.
-                        Compare its slope with the coefficient <em>with the control
-                        added</em>, above the graphs: they are equal.")),
+                        Compare its slope with the coefficient of stratio in the
+                        <em>multiple regression</em>, below the graphs: they are equal.")),
           tags$li("Try all four controls and see how much the coefficient moves each time.")
         )),
       selectInput("c2", "Control variable", choices = CONTROLS, selected = "income"),
@@ -120,17 +121,12 @@ page <- tabPanel(
 
     mainPanel(
       width = 8,
-      div(class = "box",
-          fluidRow(
-            column(6,
-              div(class = "lab", "Simple regression, no control"),
-              div(class = "big", textOutput("bs", inline = TRUE))),
-            column(6,
-              div(class = "lab", "With the control added"),
-              div(class = "big", textOutput("bm", inline = TRUE)))
-          )),
       plotOutput("panels", height = "300px"),
-      div(class = "box", uiOutput("identity")),
+      ## LESS ON SCREEN (Cristina, 7 Oct): the coefficient box above the graphs
+      ## and the FWL identity / decomposition box below them are gone. What is
+      ## left is the two regressions themselves; the stratio coefficient of the
+      ## multiple one is the slope printed on panel C.
+      div(class = "box", uiOutput("regs")),
       conditionalPanel("input.venn", plotOutput("venn", height = "300px")),
       hr(),
       p(class = "note", style = "font-size:12px;",
@@ -160,38 +156,30 @@ server <- function(input, output, session) {
     fwl  <- lm(y ~ xt)
     list(c2 = c2, x1 = x1, y = y, x2 = x2, xt = xt,
          b1 = unname(coef(mult)[2]),
+         a  = unname(coef(mult)[1]),
          b2 = unname(coef(mult)[3]),
-         d1 = unname(coef(lm(x2 ~ x1))[2]),     # slope of x2 on x1 (annex 5.2)
          fwl = unname(coef(fwl)[2]),
          r  = cor(x1, x2),
-         r2 = summary(aux)$r.squared,
          lab = names(CONTROLS)[CONTROLS == c2])
   })
 
-  output$bs <- renderText(sprintf("%+.3f", SIMPLE))
-  output$bm <- renderText(sprintf("%+.3f", bits()$b1))
-
-  output$identity <- renderUI({
+  ## The two fitted equations. The stratio coefficient gets 3 decimals, as on
+  ## the panels; the control's coefficient 3 significant digits, because
+  ## expenditure (in dollars) has a coefficient of 0.00162.
+  output$regs <- renderUI({
     b <- bits()
+    sg  <- function(v) if (v < 0) "&minus;" else "+"
+    hl  <- function(v) sprintf("<span style='color:%s;font-weight:700;'>%s %.3f</span>",
+                               garnet, sg(v), abs(v))
     HTML(sprintf(
-      "<div class='lab'>Panel C slope vs the multiple regression coefficient</div>
-       <div style='font-size:16px;padding:4px 0 10px 0;'>
-         slope on x&#771;<sub>1</sub> = <b>%.6f</b> &nbsp;&nbsp;
-         &beta;&#770;<sub>1</sub> from math ~ stratio + %s = <b>%.6f</b>
-         &nbsp; <span style='color:%s'>identical</span>
-       </div>
-       <div class='lab'>Where the difference between the two slopes comes from</div>
-       <div style='font-size:16px;padding-top:4px;'>
-         &beta;&#770;<sub>1</sub><sup>s</sup> = &beta;&#770;<sub>1</sub> +
-         &beta;&#770;<sub>2</sub>&middot;&delta;&#770;<sub>1</sub> &nbsp;=&nbsp;
-         %.3f + (%.3f)(%.4f) = <b>%.3f</b>
-       </div>
-       <div class='lab' style='padding-top:6px;'>
-         correlation between stratio and %s = %.3f &nbsp;·&nbsp;
-         it explains %.1f%% of the variation in stratio</div>",
-      b$fwl, b$c2, b$b1, navy,
-      b$b1, b$b2, b$d1, b$b1 + b$b2 * b$d1,
-      b$c2, b$r, 100 * b$r2))
+      "<div class='lab'>Simple regression (no control)</div>
+       <div style='font-size:17px;padding:2px 0 10px 0;'>
+         mat&#293; = %.2f %s stratio</div>
+       <div class='lab'>Multiple regression (with %s)</div>
+       <div style='font-size:17px;padding-top:2px;'>
+         mat&#293; = %.2f %s stratio %s %s %s</div>",
+      SIMPLE_A, hl(SIMPLE),
+      b$c2, b$a, hl(b$b1), sg(b$b2), formatC(abs(b$b2), digits = 3, format = "fg"), b$c2))
   })
 
   output$panels <- renderPlot({
