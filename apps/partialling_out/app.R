@@ -51,63 +51,101 @@ data_path <- function(f) {
 ca <- read.csv(data_path("caschools_teaching.csv"))
 
 CONTROLS <- c("District income"          = "income",
-              "% on subsidised lunch"    = "lunch",
+              "% on subsidized lunch"    = "lunch",
               "% English learners"       = "english",
               "Spending per pupil"       = "expenditure")
 
 SIMPLE <- unname(coef(lm(math ~ stratio, ca))[2])   # -1.939, never changes
 
 ## ====================  USER INTERFACE  ======================
-ui <- fluidPage(
-  tags$style(HTML(sprintf("
-    body { background:%s; }
-    .box { background:white; border:1px solid #e0e0dd; border-radius:6px;
-           padding:10px 14px; margin-bottom:10px; }
-    .note { color:%s; font-size:13px; }
-    .big  { font-size:26px; font-weight:700; color:%s; }
-    .lab  { font-size:12px; color:%s; }", soft, muted, garnet, muted))),
+## LAYOUT FOLLOWS THE UNIT 2 APP (Cristina, 7 Oct): navbar title, a one-line
+## note under it, a sidebar of width 4 that opens with a "How to use" box,
+## and the key numbers in a box ABOVE the graphs. Same css classes, so the
+## two apps look like one family even though they are separate sites.
+css <- sprintf("
+  body { background:%s; }
+  .box  { background:white; border:1px solid #e0e0dd; border-radius:6px;
+          padding:10px 14px; margin-bottom:8px; }
+  .howto { background:white; border:1px solid %s; border-left:5px solid %s;
+           border-radius:6px; padding:10px 14px 4px 14px; margin-bottom:12px; }
+  .howto h4 { margin:0 0 6px 0; font-size:15px; font-weight:700; color:%s; }
+  .howto ol { padding-left:18px; margin-bottom:6px; }
+  .howto li { font-size:13px; margin-bottom:5px; line-height:1.35; }
+  .note { color:%s; font-size:13px; }
+  .big  { font-size:26px; font-weight:700; color:%s; line-height:1.15; }
+  .lab  { font-size:12px; color:%s; }
+  h2 { color:%s; }", soft, navy, navy, navy, muted, garnet, muted, navy)
 
-  titlePanel("Partialling out: what a control variable does"),
+## htmltools puts a space before a text node that starts with punctuation
+## (strong("math"), ". Pick" renders as "math . Pick"). Every such fragment
+## below is HTML() -- see the README.
+page <- tabPanel(
+  "Partialling out: what a control variable does",
   p(class = "note",
-    "Econometrics I · Unit 3 · sections 3.2 and 3.3. ",
-    "420 California school districts. We want the effect of ", strong("stratio"),
-    " (students per teacher) on ", strong("math"), ". Pick one control variable ",
-    "and watch what happens."),
+    HTML("Econometrics I · Unit 3 · the multiple regression model.
+          420 California school districts. We want the effect of <strong>stratio</strong>
+          (students per teacher) on <strong>math</strong>. Pick one control variable
+          and watch what happens.")),
 
   sidebarLayout(
     sidebarPanel(
-      width = 3,
+      width = 4,
+      div(class = "howto",
+        h4("How to use this page"),
+        tags$ol(
+          tags$li("Pick a control variable in the menu below."),
+          tags$li(HTML("<strong>Panel A</strong> regresses math on stratio alone. Its slope
+                        is the simple regression coefficient, and it does not change
+                        when you change the control.")),
+          tags$li(HTML("<strong>Panel B</strong> regresses stratio on the control. The
+                        residuals are stratio with the control removed. We call them
+                        x&#771;<sub>1</sub>.")),
+          tags$li(HTML("<strong>Panel C</strong> regresses math on x&#771;<sub>1</sub>.
+                        Compare its slope with the coefficient <em>with the control
+                        added</em>, above the graphs: they are equal.")),
+          tags$li("Try all four controls and see how much the coefficient moves each time.")
+        )),
       selectInput("c2", "Control variable", choices = CONTROLS, selected = "income"),
       checkboxInput("venn", "Show the Ballentine diagram", TRUE),
       hr(),
-      div(class = "box",
-          div(class = "lab", "Simple regression, no control"),
-          div(class = "big", textOutput("bs", inline = TRUE)),
-          div(class = "lab", style = "padding-top:8px;", "With the control added"),
-          div(class = "big", textOutput("bm", inline = TRUE))),
       p(class = "note",
-        strong("What to look at."), " Panel C regresses math on what is ",
-        em("left"), " of stratio once the control is taken out of it. ",
-        "Its slope is the multiple regression coefficient — not close to it, ",
-        em("equal"), " to it. That is the Frisch–Waugh–Lovell theorem."),
+        HTML("<strong>What to look at.</strong> Panel C regresses math on what is
+              <em>left</em> of stratio once the control is taken out of it.
+              Its slope is the multiple regression coefficient &mdash; not close to it,
+              <em>equal</em> to it. That is the Frisch&ndash;Waugh&ndash;Lovell theorem.")),
       p(class = "note",
-        strong("Then try all four controls."), " The one that overlaps most with ",
-        "stratio is not the one that moves the coefficient most. Ask yourself why.")
+        HTML("<strong>Then try all four controls.</strong> The one that overlaps most with
+              stratio is not the one that moves the coefficient most. Ask yourself why."))
     ),
 
     mainPanel(
-      width = 9,
+      width = 8,
+      div(class = "box",
+          fluidRow(
+            column(6,
+              div(class = "lab", "Simple regression, no control"),
+              div(class = "big", textOutput("bs", inline = TRUE))),
+            column(6,
+              div(class = "lab", "With the control added"),
+              div(class = "big", textOutput("bm", inline = TRUE)))
+          )),
       plotOutput("panels", height = "300px"),
       div(class = "box", uiOutput("identity")),
       conditionalPanel("input.venn", plotOutput("venn", height = "300px")),
       hr(),
       p(class = "note", style = "font-size:12px;",
-        strong("Data."), " California Test Score Data — 420 school districts. ",
-        "Online complements to Stock, J. H. and Watson, M. W. (2007), ",
-        em("Introduction to Econometrics"), ", 2nd ed., Addison Wesley; ",
-        "distributed in the R package ", code("AER"), " as ", code("CASchools"), ".")
+        HTML("<strong>Data.</strong> California Test Score Data &mdash; 420 school districts.
+              Online complements to Stock, J. H. and Watson, M. W. (2007),
+              <em>Introduction to Econometrics</em>, 2nd ed., Addison Wesley; distributed
+              in the R package <code>AER</code> as <code>CASchools</code>."))
     )
   )
+)
+
+ui <- navbarPage(
+  title = "Econometrics I · Unit 3 · partialling out",
+  header = tags$style(HTML(css)),
+  page
 )
 
 ## ====================  SERVER  ==============================
@@ -142,8 +180,7 @@ server <- function(input, output, session) {
          &beta;&#770;<sub>1</sub> from math ~ stratio + %s = <b>%.6f</b>
          &nbsp; <span style='color:%s'>identical</span>
        </div>
-       <div class='lab'>Where the difference between the two slopes comes from
-         (annex &sect;5.2)</div>
+       <div class='lab'>Where the difference between the two slopes comes from</div>
        <div style='font-size:16px;padding-top:4px;'>
          &beta;&#770;<sub>1</sub><sup>s</sup> = &beta;&#770;<sub>1</sub> +
          &beta;&#770;<sub>2</sub>&middot;&delta;&#770;<sub>1</sub> &nbsp;=&nbsp;
