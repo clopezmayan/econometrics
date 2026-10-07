@@ -100,8 +100,8 @@ page <- tabPanel(
                         is the simple regression coefficient, and it does not change
                         when you change the control.")),
           tags$li(HTML("<strong>Panel B</strong> regresses stratio on the control. The
-                        residuals are stratio with the control removed. We call them
-                        x&#771;<sub>1</sub>.")),
+                        residuals are stratio with the control <em>partialled out</em>,
+                        that is, removed. We call them x&#771;<sub>1</sub>.")),
           tags$li(HTML("<strong>Panel C</strong> regresses math on x&#771;<sub>1</sub>.
                         Compare its slope with the coefficient of stratio in the
                         <em>multiple regression</em>, below the graphs: they are equal."))
