@@ -12,8 +12,9 @@
 #    B   stratio on the control           -> the residuals x1-tilde
 #    C   math on x1-tilde                    -> EXACTLY the multiple
 #                                               regression coefficient
-#  with the Ballentine beside it, its overlap driven by the
-#  correlation between stratio and the control the student picks.
+#  The Ballentine diagram that sat beside them was REMOVED (Cristina,
+#  7 Oct: too much information); it lives in the deck. Its code is in
+#  _deprecated/partialling_out_app_2026-10-07_20102bb.R.
 #
 #  THE POINT OF THE MENU (the thing worth discovering): the size of
 #  the overlap is NOT what moves the coefficient. `expenditure`
@@ -103,20 +104,15 @@ page <- tabPanel(
                         x&#771;<sub>1</sub>.")),
           tags$li(HTML("<strong>Panel C</strong> regresses math on x&#771;<sub>1</sub>.
                         Compare its slope with the coefficient of stratio in the
-                        <em>multiple regression</em>, below the graphs: they are equal.")),
-          tags$li("Try all four controls and see how much the coefficient moves each time.")
+                        <em>multiple regression</em>, below the graphs: they are equal."))
         )),
       selectInput("c2", "Control variable", choices = CONTROLS, selected = "income"),
-      checkboxInput("venn", "Show the Ballentine diagram", TRUE),
       hr(),
       p(class = "note",
         HTML("<strong>What to look at.</strong> Panel C regresses math on what is
               <em>left</em> of stratio once the control is taken out of it.
               Its slope is the multiple regression coefficient &mdash; not close to it,
-              <em>equal</em> to it. That is the Frisch&ndash;Waugh&ndash;Lovell theorem.")),
-      p(class = "note",
-        HTML("<strong>Then try all four controls.</strong> The one that overlaps most with
-              stratio is not the one that moves the coefficient most. Ask yourself why."))
+              <em>equal</em> to it. That is the Frisch&ndash;Waugh&ndash;Lovell theorem."))
     ),
 
     mainPanel(
@@ -127,7 +123,6 @@ page <- tabPanel(
       ## left is the two regressions themselves; the stratio coefficient of the
       ## multiple one is the slope printed on panel C.
       div(class = "box", uiOutput("regs")),
-      conditionalPanel("input.venn", plotOutput("venn", height = "300px")),
       hr(),
       p(class = "note", style = "font-size:12px;",
         HTML("<strong>Data.</strong> California Test Score Data &mdash; 420 school districts.
@@ -207,43 +202,6 @@ server <- function(input, output, session) {
        "C. math on x̃₁", sprintf("slope %+.3f", b$fwl))
   })
 
-  output$venn <- renderPlot({
-    b <- bits(); r <- 0.62
-    ## Distance between the x1 and x2 circles falls as their correlation rises,
-    ## so the overlap the student sees IS the correlation reported below.
-    d  <- 2 * r * (1 - abs(b$r)) * 0.92
-    cx1 <- -d / 2; cx2 <- d / 2; cy <- -0.34
-    yx <- 0; yy <- 0.46
-
-    circ <- function(cx, cy, col) {
-      th <- seq(0, 2 * pi, length.out = 200)
-      polygon(cx + r * cos(th), cy + r * sin(th),
-              col = adjustcolor(col, 0.30), border = adjustcolor(col, 0.8), lwd = 2)
-    }
-    par(mar = c(0, 0, 2.2, 0), bg = "white")
-    plot(NA, xlim = c(-1.5, 1.5), ylim = c(-1.15, 1.25), axes = FALSE,
-         xlab = "", ylab = "",
-         main = sprintf("The Ballentine:  overlap of stratio and %s  (r = %.2f)",
-                        b$c2, b$r),
-         col.main = navy, cex.main = 1.2)
-    circ(yx, yy, navy)          # y
-    circ(cx1, cy, garnet)       # x1 = stratio
-    circ(cx2, cy, steel)        # x2 = the control
-    text(yx, yy + 0.42, "math", col = navy, font = 2, cex = 1.1)
-    text(cx1 - 0.30, cy - 0.46, "stratio", col = garnet, font = 2, cex = 1.1)
-    text(cx2 + 0.30, cy - 0.46, b$c2, col = steel, font = 2, cex = 1.1)
-    ## Label positions follow the annex, section 5.1: A is the part of
-    ## stratio inside math but NOT shared with the control, B the part
-    ## inside neither, D+E what stratio shares with the control. So A must
-    ## sit LEFT of the control circle's left edge (cx2 - r) and still inside
-    ## the math circle -- hence the clamp. Both move as the overlap changes.
-    ax <- max(-0.42, cx2 - r - 0.16)
-    text(ax, 0.02, "A", col = navy, font = 2, cex = 1.2)
-    text(cx1 - 0.30, cy - 0.05, "B", col = navy, font = 2, cex = 1.2)
-    text((cx1 + cx2) / 2, cy - 0.30, "D + E", col = navy, font = 2, cex = 1.05)
-    mtext(expression(hat(beta)[1] == A / (A + B)), side = 1, line = -1.2,
-          col = navy, cex = 1.1)
-  })
 }
 
 shinyApp(ui, server)
