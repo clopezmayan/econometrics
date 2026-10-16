@@ -28,27 +28,28 @@ COURSE <- file.path(
   "~", "Documents", "Docencia", "UB", "Econometrics I_GEco",
   "Materials", "revised_materials")
 
-## Refresh apps/ from the course folder.
+## Refresh apps/ from the course folder. All three apps live in
+## Applications/Visual_tools/ (the dummy-variables app since 16 Oct 2026;
+## before that it was read from the concurso folder).
 sync_from_course <- function() {
   vt <- path.expand(file.path(COURSE, "Applications", "Visual_tools"))
-  dv <- path.expand(file.path(COURSE, "materiales_concurso",
-                              "leccion_materiales", "shiny_web"))
-  if (dir.exists(vt)) {
-    for (a in c("ols_least_squares", "partialling_out")) {
-      unlink(file.path("apps", a), recursive = TRUE)
-      file.copy(file.path(vt, a), "apps", recursive = TRUE)
-    }
-    file.copy(file.path(vt, "prep_data.R"), "apps", overwrite = TRUE)
-    message("synced least squares + partialling out from the course folder")
-  } else {
+  if (!dir.exists(vt)) {
     message("course folder not found -- publishing apps/ as it stands")
+    return(invisible())
   }
-  if (dir.exists(dv)) {
-    unlink(file.path("apps", "dummy_variables"), recursive = TRUE)
-    file.copy(dv, "apps", recursive = TRUE)
-    file.rename(file.path("apps", "shiny_web"), file.path("apps", "dummy_variables"))
-    message("synced dummy variables from the concurso folder")
+  # course folder name -> name in apps/
+  src <- c("ols_least_squares" = "ols_least_squares",
+           "partialling_out"   = "partialling_out",
+           "dummies"           = "dummy_variables")
+  for (i in seq_along(src)) {
+    to <- file.path("apps", src[[i]])
+    unlink(to, recursive = TRUE)
+    dir.create(to)
+    file.copy(list.files(file.path(vt, names(src)[i]), full.names = TRUE),
+              to, recursive = TRUE)
   }
+  file.copy(file.path(vt, "prep_data.R"), "apps", overwrite = TRUE)
+  message("synced the three apps from the course folder")
 }
 
 if (!interactive() && "--sync" %in% commandArgs(TRUE)) sync_from_course()
